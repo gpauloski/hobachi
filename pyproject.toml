@@ -1,0 +1,35 @@
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "hobachi"
+authors = [
+    { name = "Greg Pauloski", email = "jgpauloski@uchicago.edu" }
+]
+maintainers = [
+    { name = "Greg Pauloski", email = "jgpauloski@uchicago.edu" }
+]
+description = "Python object proxy with just-in-time resolution implemented in Rust"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+dynamic = ["readme", "version"]
+
+[project.urls]
+Homepage = "https://github.com/gpauloski/hobachi"
+Source = "https://github.com/gpauloski/hobachi"
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
