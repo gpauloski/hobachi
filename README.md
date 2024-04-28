@@ -7,7 +7,7 @@ This project is based on [python-lazy-object-proxy](https://github.com/ionelmc/p
 
 ## TODO
 
-- [ ] Implement getattr, delattr, setattr
+- [x] Implement getattr, delattr, setattr
 - [ ] Create Python tests
 - [ ] Add CI
 - [ ] Add pre-commit
