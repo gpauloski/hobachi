@@ -22,6 +22,27 @@ This project is based on [python-lazy-object-proxy](https://github.com/ionelmc/p
    $ pytest
    ```
 
+## Usage
+
+A `Proxy` instance is initialized with a *factory* function that, when invoked, creates and returns a target object.
+The proxy, once initialized, will defer invoking the factory until the first time the proxy is used (e.g., an attribute access is performed).
+Once the factory has been called to retrieve the target, the target is cached inside of the proxy, and the proxy forwards all operations on itself to the target.
+In essence, the proxy is a transparent wrapper around the target.
+
+```python
+import time
+from hobachi import Proxy
+
+def factory() -> list[int]:
+    time.sleep(1)  # Simulate expensive function
+    return [1, 2, 3]
+
+proxy = Proxy(factory)  # Call to factory() is deferred
+
+proxy.append(4)  # factory() is called on first proxy use
+assert len(proxy) == 4  # proxy behaves like the target object
+```
+
 ## TODO
 
 - [x] Implement getattr, delattr, setattr
