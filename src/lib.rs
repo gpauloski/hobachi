@@ -1,5 +1,5 @@
 use pyo3::basic::CompareOp;
-use pyo3::exceptions::{PyRuntimeError, PyTypeError};
+use pyo3::exceptions::{PyAttributeError, PyRuntimeError, PyTypeError};
 use pyo3::prelude::*;
 use pyo3::types::PyString;
 
@@ -52,7 +52,12 @@ impl Proxy {
     }
 
     fn __getattr__<'py>(&'py mut self, name: &Bound<'py, PyString>) -> PyResult<Bound<'py, PyAny>> {
-        self.target()?.bind(name.py()).getattr(name)
+        let name_str = name.to_str()?;
+        if name_str == "__factory__" || name_str == "__target__" {
+            Err(PyAttributeError::new_err("Internal error."))
+        } else {
+            self.target()?.bind(name.py()).getattr(name)
+        }
     }
 
     fn __setattr__(
@@ -136,6 +141,7 @@ impl Proxy {
 }
 
 impl Proxy {
+    #[allow(dead_code)]
     fn resolved(&self) -> bool {
         self.__target__.is_some()
     }

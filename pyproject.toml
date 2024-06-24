@@ -27,9 +27,69 @@ classifiers = [
 ]
 dynamic = ["readme", "version"]
 
+[project.optional-dependencies]
+dev = [
+    "maturin",
+    "mypy",
+    "pre-commit",
+    "pytest",
+    "ruff>=0.2.0",
+]
+
 [project.urls]
 Homepage = "https://github.com/gpauloski/hobachi"
 Source = "https://github.com/gpauloski/hobachi"
 
+[tool.codespell]
+skip = """
+.git,
+.github,
+__pycache__,
+build,
+dist,
+.*egg-info
+target
+"""
+
 [tool.maturin]
 features = ["pyo3/extension-module"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["mypy.plugins.proper_plugin"]
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_configs = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+allow_incomplete_defs = true
+allow_untyped_defs = true
+
+[tool.ruff]
+line-length = 79
+target-version = "py38"
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "single"
+
+[tool.ruff.lint]
+select = ["F", "E", "I", "N", "UP", "YTT", "B", "A", "COM", "C4", "ISC", "PT", "Q", "T10", "SIM", "PLE", "PLW", "RUF"]
+
+[tool.ruff.lint.flake8-pytest-style]
+parametrize-values-type = "tuple"
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+
+[tool.ruff.lint.isort]
+force-single-line = true
+known-first-party = ["hobachi", "test"]
+order-by-type = false
+required-imports = ["from __future__ import annotations"]
