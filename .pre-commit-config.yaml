@@ -1,5 +1,6 @@
 ci:
   autofix_prs: false
+  skip: [cargo-fmt, cargo-clippy]
 repos:
   - repo: 'https://github.com/pre-commit/pre-commit-hooks'
     rev: v4.6.0
@@ -28,8 +29,18 @@ repos:
     rev: v1.10.0
     hooks:
       - id: mypy
-  - repo: 'https://github.com/doublify/pre-commit-rust'
-    rev: v1.0
+  - repo: local
     hooks:
-      -   id: fmt
-      -   id: clippy
+      - id: cargo-fmt
+        name: cargo-fmt
+        entry: cargo fmt
+        language: system
+        types: [rust]
+        pass_filenames: false
+      - id: cargo-clippy
+        name: cargo-clippy
+        entry: cargo clippy
+        language: system
+        args: ["--", "-D", "warnings"]
+        types: [rust]
+        pass_filenames: false
