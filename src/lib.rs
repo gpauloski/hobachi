@@ -27,6 +27,41 @@ impl Proxy {
         })
     }
 
+    // Basic object customization
+    // https://pyo3.rs/v0.22.0/class/protocols#basic-object-customization
+
+    fn __str__(&mut self) -> PyResult<String> {
+        Ok(self.target()?.to_string())
+    }
+
+    fn __repr__(&self) -> String {
+        if let Some(target) = &self.__target__ {
+            format!(
+                "<Proxy wrapping {} with factory {}>",
+                target, self.__factory__
+            )
+        } else {
+            format!("<Proxy with factory {}>", self.__factory__)
+        }
+    }
+
+    fn __hash__(&mut self) -> PyResult<isize> {
+        Python::with_gil(|py| self.target()?.bind(py).hash())
+    }
+
+    fn __richcmp__(&mut self, other: &Bound<'_, PyAny>, op: CompareOp) -> PyResult<bool> {
+        let binding = self.target()?;
+        let left = binding.bind(other.py());
+        match op {
+            CompareOp::Lt => left.lt(other),
+            CompareOp::Le => left.le(other),
+            CompareOp::Eq => left.eq(other),
+            CompareOp::Ne => left.ne(other),
+            CompareOp::Gt => left.gt(other),
+            CompareOp::Ge => left.ge(other),
+        }
+    }
+
     fn __getattr__<'py>(&'py mut self, name: &Bound<'py, PyString>) -> PyResult<Bound<'py, PyAny>> {
         let name_str = name.to_str()?;
         if name_str == "__factory__" || name_str == "__target__" {
@@ -51,25 +86,8 @@ impl Proxy {
         Ok(())
     }
 
-    // pyo3 supported protocols: https://pyo3.rs/v0.22.0/class/protocols
-
-    fn __repr__(&self) -> String {
-        if let Some(target) = &self.__target__ {
-            format!(
-                "<Proxy wrapping {} with factory {}>",
-                target, self.__factory__
-            )
-        } else {
-            format!("<Proxy with factory {}>", self.__factory__)
-        }
-    }
-
-    fn __str__(&mut self) -> PyResult<String> {
-        Ok(self.target()?.to_string())
-    }
-
-    fn __hash__(&mut self) -> PyResult<isize> {
-        Python::with_gil(|py| self.target()?.bind(py).hash())
+    fn __bool__(&mut self) -> PyResult<bool> {
+        Python::with_gil(|py| self.target()?.is_truthy(py))
     }
 
     #[pyo3(signature = (*args, **kwargs))]
@@ -84,22 +102,8 @@ impl Proxy {
         })
     }
 
-    fn __bool__(&mut self) -> PyResult<bool> {
-        Python::with_gil(|py| self.target()?.is_truthy(py))
-    }
-
-    fn __richcmp__(&mut self, other: &Bound<'_, PyAny>, op: CompareOp) -> PyResult<bool> {
-        let binding = self.target()?;
-        let left = binding.bind(other.py());
-        match op {
-            CompareOp::Lt => left.lt(other),
-            CompareOp::Le => left.le(other),
-            CompareOp::Eq => left.eq(other),
-            CompareOp::Ne => left.ne(other),
-            CompareOp::Gt => left.gt(other),
-            CompareOp::Ge => left.ge(other),
-        }
-    }
+    // Numeric types
+    // https://pyo3.rs/v0.22.0/class/protocols#numeric-types
 
     fn __add__<'py>(&'py mut self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
         self.target()?.bind(other.py()).add(other)
