@@ -1,7 +1,9 @@
 use pyo3::basic::CompareOp;
 use pyo3::exceptions::{PyAttributeError, PyRuntimeError, PyTypeError};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 use pyo3::types::PyString;
+use pyo3::types::PyTuple;
 
 #[pyclass(module = "hobachi")]
 struct Proxy {
@@ -23,32 +25,6 @@ impl Proxy {
                 })
             }
         })
-    }
-
-    #[allow(non_snake_case)]
-    #[getter]
-    fn get__factory__(&self) -> PyResult<PyObject> {
-        Ok(self.__factory__.clone())
-    }
-
-    #[allow(non_snake_case)]
-    #[setter]
-    fn set__factory__(&mut self, value: PyObject) -> PyResult<()> {
-        self.__factory__ = value;
-        Ok(())
-    }
-
-    #[allow(non_snake_case)]
-    #[getter]
-    fn get__target__(&mut self) -> PyResult<PyObject> {
-        self.target()
-    }
-
-    #[allow(non_snake_case)]
-    #[setter]
-    fn set__target__(&mut self, value: PyObject) -> PyResult<()> {
-        let _ = self.__target__.insert(value);
-        Ok(())
     }
 
     fn __getattr__<'py>(&'py mut self, name: &Bound<'py, PyString>) -> PyResult<Bound<'py, PyAny>> {
@@ -75,6 +51,8 @@ impl Proxy {
         Ok(())
     }
 
+    // pyo3 supported protocols: https://pyo3.rs/v0.22.0/class/protocols
+
     fn __repr__(&self) -> String {
         if let Some(target) = &self.__target__ {
             format!(
@@ -92,6 +70,18 @@ impl Proxy {
 
     fn __hash__(&mut self) -> PyResult<isize> {
         Python::with_gil(|py| self.target()?.bind(py).hash())
+    }
+
+    #[pyo3(signature = (*args, **kwargs))]
+    fn __call__(
+        &mut self,
+        args: Bound<'_, PyTuple>,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PyObject> {
+        Python::with_gil(|py| {
+            let target = self.target()?;
+            target.call_bound(py, args, kwargs)
+        })
     }
 
     fn __bool__(&mut self) -> PyResult<bool> {
@@ -128,7 +118,7 @@ impl Proxy {
     }
 
     fn __floordiv__<'py>(&'py mut self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        self.target()?.bind(other.py()).div(other)
+        self.target()?.bind(other.py()).floor_div(other)
     }
 
     fn __lshift__<'py>(&'py mut self, other: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
@@ -141,28 +131,45 @@ impl Proxy {
 }
 
 impl Proxy {
-    #[allow(dead_code)]
-    fn resolved(&self) -> bool {
+    pub fn resolved(&self) -> bool {
         self.__target__.is_some()
     }
 
-    fn target(&mut self) -> PyResult<PyObject> {
+    pub fn target(&mut self) -> PyResult<PyObject> {
         if self.__target__.is_none() {
             let result =
                 Python::with_gil(|py| -> PyResult<PyObject> { self.__factory__.call0(py) })?;
             let _ = self.__target__.insert(result);
         }
 
-        if let Some(target) = self.__target__.clone() {
-            Ok(target)
+        if let Some(target) = &self.__target__ {
+            Python::with_gil(|py| Ok(target.clone_ref(py)))
         } else {
             Err(PyRuntimeError::new_err("Failed to resolve proxy."))
         }
     }
 }
 
+#[pyfunction]
+fn extract(p: &Bound<'_, Proxy>) -> PyResult<PyObject> {
+    p.borrow_mut().target()
+}
+
+#[pyfunction]
+fn is_resolved(p: &Bound<'_, Proxy>) -> bool {
+    p.borrow().resolved()
+}
+
+#[pyfunction]
+fn resolve(p: &Bound<'_, Proxy>) -> PyResult<()> {
+    p.borrow_mut().target().map(|_| ())
+}
+
 #[pymodule]
 fn hobachi(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Proxy>()?;
+    m.add_function(wrap_pyfunction!(extract, m)?).unwrap();
+    m.add_function(wrap_pyfunction!(is_resolved, m)?).unwrap();
+    m.add_function(wrap_pyfunction!(resolve, m)?).unwrap();
     Ok(())
 }
