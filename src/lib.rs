@@ -1,9 +1,7 @@
 use pyo3::basic::CompareOp;
 use pyo3::exceptions::{PyAttributeError, PyRuntimeError, PyTypeError};
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
-use pyo3::types::PyString;
-use pyo3::types::PyTuple;
+use pyo3::types::{PyDict, PyIterator, PyString, PyTuple};
 
 #[pyclass(module = "hobachi")]
 struct Proxy {
@@ -101,6 +99,31 @@ impl Proxy {
             target.call_bound(py, args, kwargs)
         })
     }
+
+    // Iterable objects
+    // https://pyo3.rs/v0.22.0/class/protocols#numeric-types
+
+    fn __iter__(&mut self) -> PyResult<Py<PyIterator>> {
+        Python::with_gil(|py| Ok(self.target()?.bind(py).iter()?.unbind()))
+    }
+
+    fn __next__(&mut self) -> PyResult<PyObject> {
+        Python::with_gil(|py| {
+            self.target()?
+                .bind(py)
+                .getattr("__next__")?
+                .unbind()
+                .call0(py)
+        })
+    }
+
+    // Awaitable objects (not implemented!)
+    // https://pyo3.rs/v0.22.0/class/protocols#awaitable-objects
+
+    // Mapping & Sequence types
+    // https://pyo3.rs/v0.22.0/class/protocols#mapping--sequence-types
+
+    // TODO
 
     // Numeric types
     // https://pyo3.rs/v0.22.0/class/protocols#numeric-types

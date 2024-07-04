@@ -75,6 +75,22 @@ def test_cmp() -> None:
     assert proxy >= -1
 
 
+def test_iter() -> None:
+    proxy = Proxy(lambda: [1, 2, 3])
+
+    for x, y in zip(proxy, [1, 2, 3]):
+        assert x == y
+
+
+def test_next() -> None:
+    class Foo:
+        def __next__(self) -> int:
+            return 1
+
+    proxy = Proxy(lambda: Foo())
+    assert next(proxy) == 1
+
+
 def test_add() -> None:
     proxy = Proxy(lambda: 0)
 
