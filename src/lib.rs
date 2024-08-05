@@ -108,13 +108,7 @@ impl Proxy {
     }
 
     fn __next__(&mut self) -> PyResult<PyObject> {
-        Python::with_gil(|py| {
-            self.target()?
-                .bind(py)
-                .getattr("__next__")?
-                .unbind()
-                .call0(py)
-        })
+        self.call_method0("__next__")
     }
 
     // Awaitable objects (not implemented!)
@@ -122,8 +116,39 @@ impl Proxy {
 
     // Mapping & Sequence types
     // https://pyo3.rs/v0.22.0/class/protocols#mapping--sequence-types
+    //
+    // Note that __concat__, __repeat__, __inplace_concat__, and __inplace_repeat__
+    // are not implemented because __add__, __mul__, __iadd__, and __imul__ are
+    // already.
 
-    // TODO
+    fn __len__(&mut self) -> PyResult<usize> {
+        Python::with_gil(|py| {
+            self.target()?
+                .bind(py)
+                .getattr("__len__")?
+                .unbind()
+                .call0(py)?
+                .extract::<usize>(py)
+        })
+    }
+
+    fn __contains__<'py>(&'py mut self, value: &Bound<'py, PyAny>) -> PyResult<bool> {
+        self.target()?.bind(value.py()).contains(value)
+    }
+
+    fn __getitem__(&mut self, key: PyObject) -> PyResult<PyObject> {
+        self.call_method1("__getitem__", vec![key])
+    }
+
+    fn __setitem__(&mut self, key: PyObject, value: PyObject) -> PyResult<()> {
+        self.call_method1("__setitem__", vec![key, value])?;
+        Ok(())
+    }
+
+    fn __delitem__(&mut self, key: PyObject) -> PyResult<()> {
+        self.call_method1("__delitem__", vec![key])?;
+        Ok(())
+    }
 
     // Numeric types
     // https://pyo3.rs/v0.22.0/class/protocols#numeric-types
@@ -158,11 +183,11 @@ impl Proxy {
 }
 
 impl Proxy {
-    pub fn resolved(&self) -> bool {
+    fn resolved(&self) -> bool {
         self.__target__.is_some()
     }
 
-    pub fn target(&mut self) -> PyResult<PyObject> {
+    fn target(&mut self) -> PyResult<PyObject> {
         if self.__target__.is_none() {
             let result =
                 Python::with_gil(|py| -> PyResult<PyObject> { self.__factory__.call0(py) })?;
@@ -174,6 +199,20 @@ impl Proxy {
         } else {
             Err(PyRuntimeError::new_err("Failed to resolve proxy."))
         }
+    }
+
+    fn call_method0(&mut self, method: &str) -> PyResult<PyObject> {
+        Python::with_gil(|py| self.target()?.bind(py).getattr(method)?.unbind().call0(py))
+    }
+
+    fn call_method1(&mut self, method: &str, args: Vec<PyObject>) -> PyResult<PyObject> {
+        Python::with_gil(|py| {
+            self.target()?
+                .bind(py)
+                .getattr(method)?
+                .unbind()
+                .call1(py, PyTuple::new_bound(py, args))
+        })
     }
 }
 
