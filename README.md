@@ -1,5 +1,7 @@
 # hobachi
 
+> :warning: This project was used to learn certain features of PyO3 and is not maintained.
+
 Python object proxy with just-in-time resolution implemented in Rust.
 *Hobachi* means a copy (noun) or to imitate (verb) in the Chickasaw and Choctaw languages.
 
@@ -49,7 +51,6 @@ assert len(proxy) == 4  # proxy behaves like the target object
 - [x] Create Python tests
 - [x] Add CI
 - [x] Add pre-commit
-- [ ] Add branch protection / other github metadata
-- [ ] Finish implementation of special methods
+- [x] Add branch protection / other github metadata
+- [ ] Add more special methods support
 - [ ] Add docs
-- [ ] Add release mechanism

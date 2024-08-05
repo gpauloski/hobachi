@@ -91,6 +91,27 @@ def test_next() -> None:
     assert next(proxy) == 1
 
 
+def test_sequence() -> None:
+    values = ['1', '2', '3']
+    proxy = Proxy(lambda: values)
+    assert len(proxy) == len(values)
+    assert '1' in proxy
+    assert proxy[1] == '2'
+    proxy[1] = 'a'
+    assert proxy[1] == 'a'
+
+
+def test_mapping() -> None:
+    mapping = {'a': 1, 'b': 2}
+    proxy = Proxy(lambda: mapping)
+    assert len(proxy) == len(mapping)
+    assert proxy['a'] == 1
+    proxy['c'] = 3
+    assert len(proxy) == 3
+    del proxy['c']
+    assert len(proxy) == 2
+
+
 def test_add() -> None:
     proxy = Proxy(lambda: 0)
 
