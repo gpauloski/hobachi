@@ -96,7 +96,7 @@ impl Proxy {
     ) -> PyResult<PyObject> {
         Python::with_gil(|py| {
             let target = self.target()?;
-            target.call_bound(py, args, kwargs)
+            target.call(py, args, kwargs)
         })
     }
 
@@ -104,7 +104,7 @@ impl Proxy {
     // https://pyo3.rs/v0.22.0/class/protocols#numeric-types
 
     fn __iter__(&mut self) -> PyResult<Py<PyIterator>> {
-        Python::with_gil(|py| Ok(self.target()?.bind(py).iter()?.unbind()))
+        Python::with_gil(|py| Ok(self.target()?.bind(py).try_iter()?.unbind()))
     }
 
     fn __next__(&mut self) -> PyResult<PyObject> {
@@ -195,7 +195,7 @@ impl Proxy {
         }
 
         if let Some(target) = &self.__target__ {
-            Python::with_gil(|py| Ok(target.clone_ref(py)))
+            Ok(Python::with_gil(|py| target.clone_ref(py)))
         } else {
             Err(PyRuntimeError::new_err("Failed to resolve proxy."))
         }
@@ -211,7 +211,7 @@ impl Proxy {
                 .bind(py)
                 .getattr(method)?
                 .unbind()
-                .call1(py, PyTuple::new_bound(py, args))
+                .call1(py, PyTuple::new(py, args)?)
         })
     }
 }
