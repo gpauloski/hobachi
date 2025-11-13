@@ -78,7 +78,7 @@ def test_cmp() -> None:
 def test_iter() -> None:
     proxy = Proxy(lambda: [1, 2, 3])
 
-    for x, y in zip(proxy, [1, 2, 3]):
+    for x, y in zip(proxy, [1, 2, 3], strict=True):
         assert x == y
 
 

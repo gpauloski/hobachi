@@ -9,4 +9,4 @@ name = "hobachi"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = "0.23.5"
+pyo3 = "0.27.1"
