@@ -11,17 +11,13 @@ maintainers = [
     { name = "Greg Pauloski", email = "jgpauloski@uchicago.edu" }
 ]
 description = "Python object proxy with just-in-time resolution implemented in Rust"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Rust",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
@@ -55,7 +51,7 @@ target
 features = ["pyo3/extension-module"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.14"
 plugins = ["mypy.plugins.proper_plugin"]
 check_untyped_defs = true
 disallow_any_generics = true
@@ -73,7 +69,7 @@ allow_untyped_defs = true
 
 [tool.ruff]
 line-length = 79
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.format]
 indent-style = "space"

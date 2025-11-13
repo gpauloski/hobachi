@@ -5,15 +5,15 @@ use pyo3::types::{PyDict, PyIterator, PyString, PyTuple};
 
 #[pyclass(module = "hobachi")]
 struct Proxy {
-    __factory__: PyObject,
-    __target__: Option<PyObject>,
+    __factory__: Py<PyAny>,
+    __target__: Option<Py<PyAny>>,
 }
 
 #[pymethods]
 impl Proxy {
     #[new]
-    fn new(factory: PyObject) -> PyResult<Self> {
-        Python::with_gil(|py| {
+    fn new(factory: Py<PyAny>) -> PyResult<Self> {
+        Python::attach(|py| {
             if !factory.bind(py).is_callable() {
                 Err(PyTypeError::new_err("The factory is not callable."))
             } else {
@@ -44,7 +44,7 @@ impl Proxy {
     }
 
     fn __hash__(&mut self) -> PyResult<isize> {
-        Python::with_gil(|py| self.target()?.bind(py).hash())
+        Python::attach(|py| self.target()?.bind(py).hash())
     }
 
     fn __richcmp__(&mut self, other: &Bound<'_, PyAny>, op: CompareOp) -> PyResult<bool> {
@@ -85,7 +85,7 @@ impl Proxy {
     }
 
     fn __bool__(&mut self) -> PyResult<bool> {
-        Python::with_gil(|py| self.target()?.is_truthy(py))
+        Python::attach(|py| self.target()?.is_truthy(py))
     }
 
     #[pyo3(signature = (*args, **kwargs))]
@@ -93,8 +93,8 @@ impl Proxy {
         &mut self,
         args: Bound<'_, PyTuple>,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PyObject> {
-        Python::with_gil(|py| {
+    ) -> PyResult<Py<PyAny>> {
+        Python::attach(|py| {
             let target = self.target()?;
             target.call(py, args, kwargs)
         })
@@ -104,10 +104,10 @@ impl Proxy {
     // https://pyo3.rs/v0.22.0/class/protocols#numeric-types
 
     fn __iter__(&mut self) -> PyResult<Py<PyIterator>> {
-        Python::with_gil(|py| Ok(self.target()?.bind(py).try_iter()?.unbind()))
+        Python::attach(|py| Ok(self.target()?.bind(py).try_iter()?.unbind()))
     }
 
-    fn __next__(&mut self) -> PyResult<PyObject> {
+    fn __next__(&mut self) -> PyResult<Py<PyAny>> {
         self.call_method0("__next__")
     }
 
@@ -122,7 +122,7 @@ impl Proxy {
     // already.
 
     fn __len__(&mut self) -> PyResult<usize> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             self.target()?
                 .bind(py)
                 .getattr("__len__")?
@@ -136,16 +136,16 @@ impl Proxy {
         self.target()?.bind(value.py()).contains(value)
     }
 
-    fn __getitem__(&mut self, key: PyObject) -> PyResult<PyObject> {
+    fn __getitem__(&mut self, key: Py<PyAny>) -> PyResult<Py<PyAny>> {
         self.call_method1("__getitem__", vec![key])
     }
 
-    fn __setitem__(&mut self, key: PyObject, value: PyObject) -> PyResult<()> {
+    fn __setitem__(&mut self, key: Py<PyAny>, value: Py<PyAny>) -> PyResult<()> {
         self.call_method1("__setitem__", vec![key, value])?;
         Ok(())
     }
 
-    fn __delitem__(&mut self, key: PyObject) -> PyResult<()> {
+    fn __delitem__(&mut self, key: Py<PyAny>) -> PyResult<()> {
         self.call_method1("__delitem__", vec![key])?;
         Ok(())
     }
@@ -187,26 +187,26 @@ impl Proxy {
         self.__target__.is_some()
     }
 
-    fn target(&mut self) -> PyResult<PyObject> {
+    fn target(&mut self) -> PyResult<Py<PyAny>> {
         if self.__target__.is_none() {
             let result =
-                Python::with_gil(|py| -> PyResult<PyObject> { self.__factory__.call0(py) })?;
+                Python::attach(|py| -> PyResult<Py<PyAny>> { self.__factory__.call0(py) })?;
             let _ = self.__target__.insert(result);
         }
 
         if let Some(target) = &self.__target__ {
-            Ok(Python::with_gil(|py| target.clone_ref(py)))
+            Ok(Python::attach(|py| target.clone_ref(py)))
         } else {
             Err(PyRuntimeError::new_err("Failed to resolve proxy."))
         }
     }
 
-    fn call_method0(&mut self, method: &str) -> PyResult<PyObject> {
-        Python::with_gil(|py| self.target()?.bind(py).getattr(method)?.unbind().call0(py))
+    fn call_method0(&mut self, method: &str) -> PyResult<Py<PyAny>> {
+        Python::attach(|py| self.target()?.bind(py).getattr(method)?.unbind().call0(py))
     }
 
-    fn call_method1(&mut self, method: &str, args: Vec<PyObject>) -> PyResult<PyObject> {
-        Python::with_gil(|py| {
+    fn call_method1(&mut self, method: &str, args: Vec<Py<PyAny>>) -> PyResult<Py<PyAny>> {
+        Python::attach(|py| {
             self.target()?
                 .bind(py)
                 .getattr(method)?
@@ -217,7 +217,7 @@ impl Proxy {
 }
 
 #[pyfunction]
-fn extract(p: &Bound<'_, Proxy>) -> PyResult<PyObject> {
+fn extract(p: &Bound<'_, Proxy>) -> PyResult<Py<PyAny>> {
     p.borrow_mut().target()
 }
 
