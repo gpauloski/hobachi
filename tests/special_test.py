@@ -21,7 +21,7 @@ def test_str() -> None:
         def __str__(self) -> str:
             return 'bar'
 
-    proxy = Proxy(lambda: Foo())
+    proxy = Proxy(Foo)
     assert str(proxy) == 'bar'
 
 
@@ -36,7 +36,7 @@ def test_call() -> None:
         def __call__(self) -> str:
             return 'bar'
 
-    proxy = Proxy(lambda: Foo())
+    proxy = Proxy(Foo)
     assert proxy() == 'bar'
 
 
@@ -45,7 +45,7 @@ def test_call_with_args() -> None:
         def __call__(self, /, x: int, *, y: int) -> bool:
             return x != y
 
-    proxy = Proxy(lambda: Foo())
+    proxy = Proxy(Foo)
     assert proxy(1, y=2)
     assert not proxy(1, y=1)
 
@@ -58,7 +58,7 @@ def test_bool() -> None:
         def __bool__(self) -> bool:
             return False
 
-    proxy = Proxy(lambda: Foo())
+    proxy = Proxy(Foo)
     assert not proxy
 
 
@@ -87,7 +87,7 @@ def test_next() -> None:
         def __next__(self) -> int:
             return 1
 
-    proxy = Proxy(lambda: Foo())
+    proxy = Proxy(Foo)
     assert next(proxy) == 1
 
 

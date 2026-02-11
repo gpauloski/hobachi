@@ -11,12 +11,12 @@ class Foo:
 
 
 def test_getattr() -> None:
-    proxy = Proxy(lambda: Foo())
+    proxy = Proxy(Foo)
     assert proxy.bar == Foo().bar
 
 
 def test_setattr() -> None:
-    proxy = Proxy(lambda: Foo())
+    proxy = Proxy(Foo)
     assert proxy.bar != 0
 
     proxy.bar = 0
@@ -24,7 +24,7 @@ def test_setattr() -> None:
 
 
 def test_delattr() -> None:
-    proxy = Proxy(lambda: Foo())
+    proxy = Proxy(Foo)
     assert proxy.bar != 0
 
     delattr(proxy, 'bar')
