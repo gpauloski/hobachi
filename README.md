@@ -35,9 +35,11 @@ In essence, the proxy is a transparent wrapper around the target.
 import time
 from hobachi import Proxy
 
+
 def factory() -> list[int]:
     time.sleep(1)  # Simulate expensive function
     return [1, 2, 3]
+
 
 proxy = Proxy(factory)  # Call to factory() is deferred
 
